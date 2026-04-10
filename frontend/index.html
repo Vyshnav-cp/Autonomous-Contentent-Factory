@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Content Factory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            color: #667eea;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        header .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* Main Container */
+        .container {
+            flex: 1;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Two Column Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            height: 100%;
+        }
+
+        /* Left Panel - Upload & Form */
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .upload-area .highlight {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* File List */
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item .file-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .file-item .file-size {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .file-item .remove-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .file-item .remove-btn:hover {
+            background: #ff3838;
+        }
+
+        /* Form Section */
+        .form-section {
+            margin-top: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Right Panel - Results */
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-panel .panel {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #999;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .result-item p {
+            color: #666;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: #999;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            header {
+                padding: 15px 20px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .panel::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .panel::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>🚀 Autonomous Content Factory</h1>
+        <div class="subtitle">AI-Powered Content Generation Platform</div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="layout">
+            <!-- Left Panel: Upload & Form -->
+            <div class="panel">
+                <h2>📤 Create Campaign</h2>
+                
+                <div id="alert" class="alert"></div>
+
+                <!-- Upload Section -->
+                <div class="upload-section">
+                    <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">
+                        📎 Upload Document (Optional)
+                    </label>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <p>Drag and drop your file here</p>
+                        <p>or <span class="highlight">click to browse</span></p>
+                        <p style="font-size: 12px; color: #999; margin-top: 10px;">
+                            Supported: .txt, .md, .pdf, .csv, .json
+                        </p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".txt,.md,.pdf,.csv,.json">
+                    <div class="file-list" id="fileList"></div>
+                </div>
+
+                <!-- Form Section -->
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="productName">Product Name *</label>
+                        <input type="text" id="productName" placeholder="e.g., Smart Water Bottle" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productDescription">Product Description *</label>
+                        <textarea id="productDescription" placeholder="Describe your product..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="targetAudience">Target Audience</label>
+                        <input type="text" id="targetAudience" placeholder="e.g., Health-conscious professionals">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tone">Tone *</label>
+                        <select id="tone" required>
+                            <option value="">Select tone...</option>
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="creative">Creative</option>
+                            <option value="technical">Technical</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" id="generateBtn">
+                        ✨ Generate Campaign
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Results -->
+            <div class="results-panel">
+                <div class="panel">
+                    <h2>📊 Generated Content</h2>
+                    
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('blog')">📝 Blog</button>
+                        <button class="tab-btn" onclick="switchTab('twitter')">🐦 Twitter</button>
+                        <button class="tab-btn" onclick="switchTab('email')">📧 Email</button>
+                        <button class="tab-btn" onclick="switchTab('product')">📦 Product</button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div id="blog" class="tab-content active">
+                        <div id="blogResult"></div>
+                    </div>
+
+                    <div id="twitter" class="tab-content">
+                        <div id="twitterResult"></div>
+                    </div>
+
+                    <div id="email" class="tab-content">
+                        <div id="emailResult"></div>
+                    </div>
+
+                    <div id="product" class="tab-content">
+                        <div id="productResult"></div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="empty-state">
+                        <div class="empty-state-icon">✨</div>
+                        <p>No campaigns generated yet</p>
+                        <p style="font-size: 14px;">Fill out the form and click "Generate Campaign" to get started!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let uploadedFiles = [];
+
+        // Upload Area Events
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                uploadedFiles.push(file);
+                displayFile(file);
+            }
+        }
+
+        function displayFile(file) {
+            const fileList = document.getElementById('fileList');
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <div>
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${(file.size / 1024).toFixed(2)} KB</div>
+                </div>
+                <button class="remove-btn" onclick="removeFile('${file.name}')">Remove</button>
+            `;
+            fileList.appendChild(fileItem);
+        }
+
+        function removeFile(fileName) {
+            uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            uploadedFiles.forEach(displayFile);
+        }
+
+        // Generate Campaign
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const productName = document.getElementById('productName').value;
+            const productDescription = document.getElementById('productDescription').value;
+            const targetAudience = document.getElementById('targetAudience').value;
+            const tone = document.getElementById('tone').value;
+
+            if (!productName || !productDescription || !tone) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/generate-campaign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_name: productName,
+                        product_description: productDescription,
+                        target_audience: targetAudience,
+                        tone: tone
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate campaign');
+                }
+
+                const data = await response.json();
+                displayResults(data);
+                showAlert('Campaign generated successfully!', 'success');
+                document.getElementById('emptyState').style.display = 'none';
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✨ Generate Campaign';
+            }
+        });
+
+        function displayResults(data) {
+            // Blog
+            const blogResult = document.getElementById('blogResult');
+            blogResult.innerHTML = `
+                <div class="result-item">
+                    <h3>📝 Blog Post</h3>
+                    <p>${data.blog || 'No blog content generated'}</p>
+                    <button class="copy-btn" onclick="copyToClipboard('${escapeSingleQuote(data.blog)}')">
+                        Copy
+                    </button>
+                </div>
+            `;
+
+            // Twitter
+            const twitterResult = document.getElementById('twitterResult');
+            const tweets = data.twitter || [];
+            twitterResult.innerHTML = tweets.map((tweet, i) => `
+                <div class="result-item">
+                    <h3>🐦 Tweet ${i + 1}</h3>
+                    <p>${tweet}</p>
+                    <button class="copy-btn" onclick="copyToClipboard('${escapeSingleQuote(tweet)}')">
+                        Copy
+                    </button>
+                </div>
+            `).join('');
+
+            // Email
+            const emailResult = document.getElementById('emailResult');
+            emailResult.innerHTML = `
+                <div class="result-item">
+                    <h3>📧 Email Template</h3>
+                    <p>${data.email || 'No email content generated'}</p>
+                    <button class="copy-btn" onclick="copyToClipboard('${escapeSingleQuote(data.email)}')">
+                        Copy
+                    </button>
+                </div>
+            `;
+
+            // Product Description
+            const productResult = document.getElementById('productResult');
+            productResult.innerHTML = `
+                <div class="result-item">
+                    <h3>📦 Product Description</h3>
+                    <p>${data.product_description || 'No product description generated'}</p>
+                    <button class="copy-btn" onclick="copyToClipboard('${escapeSingleQuote(data.product_description)}')">
+                        Copy
+                    </button>
+                </div>
+            `;
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        function copyToClipboard(text) {
+            const decoded = text.replace(/\\n/g, '\n').replace(/\\'/g, "'");
+            navigator.clipboard.writeText(decoded).then(() => {
+                showAlert('Copied to clipboard!', 'info');
+            }).catch(() => {
+                showAlert('Failed to copy', 'error');
+            });
+        }
+
+        function escapeSingleQuote(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/\n/g, '\\n');
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // Health check on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (!response.ok) {
+                    showAlert('⚠️ Backend server not responding', 'error');
+                }
+            } catch (error) {
+                showAlert('⚠️ Cannot connect to backend. Ensure servers are running.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
